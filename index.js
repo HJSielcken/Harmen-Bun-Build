@@ -1,59 +1,37 @@
 import { cssEntries, cssLoader } from './cssLoader'
 import { kaliberConfigLoader } from './kaliberConfigLoader'
-import { universalLoader } from './universalLoader'
+import { universalClientLoader, universalServerLoader } from './universalLoader'
+import { readdirSync, copyFileSync, unlinkSync } from 'fs'
 
 
 async function build() {
+  const srcFiles = readdirSync('src')
+  const universalEntrypoints = srcFiles.filter(x => /universal\.jsx/.test(x)).map(x => `${import.meta.dir}/src/${x}`)
+  universalEntrypoints.map(x => copyFileSync(x, x.replace('.jsx', '.js')))
+
   try {
-    const clientResult = await Bun.build({
-      entrypoints: ['./src/Container.universal.jsx'],
+    await Bun.build({
+      entrypoints: universalEntrypoints,
       outdir: './build',
       target: 'browser',
       naming: {
         entry: '[dir]/[name].browser.[ext]'
       },
-      splitting: false,
-      plugins: [cssLoader, kaliberConfigLoader],
+      splitting: true,
+      plugins: [universalClientLoader, cssLoader, kaliberConfigLoader],
     })
-
-    const clientMap = Object.fromEntries(clientResult.outputs.map(x => {
-      return [
-        x.path.replace('/build/', '/src/')
-          .replace('universal.browser', 'universal')
-          .replace('.js', '.jsx'),
-        x.path
-      ]
-    }))
-
-    const serverResult = await Bun.build({
-      entrypoints: ['./src/Container.universal.jsx'],
-      outdir: './build',
-      target: 'bun',
-      naming: {
-        entry: '[dir]/[name].server.[ext]'
-      },
-      splitting: false,
-      plugins: [cssLoader, kaliberConfigLoader],
-    })
-
-
-    const serverMap = Object.fromEntries(serverResult.outputs.map(x => [
-      x.path
-        .replace('/build/', '/src/')
-        .replace('universal.server', 'universal')
-        .replace('.js', '.jsx'),
-      x.path
-    ]
-    ))
 
     const result = await Bun.build({
       entrypoints: ['./src/App.jsx'],
       outdir: './build',
       target: 'bun',
-
-      plugins: [cssLoader, kaliberConfigLoader, universalLoader({ clientMap, serverMap })],
+      plugins: [universalServerLoader, cssLoader],
     })
     const allCss = cssEntries.join('\n')
+
+    universalEntrypoints.map(x => unlinkSync(x.replace('.jsx', '.js')))
+
+
     await Bun.write('./build/allCss.css', allCss)
 
     console.log(result.logs.join('\n'))

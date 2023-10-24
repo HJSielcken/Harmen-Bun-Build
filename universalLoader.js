@@ -1,10 +1,9 @@
-export const universalLoader = ({ clientMap, serverMap }) => ({
-  name: 'universal-modules',
+export const universalClientLoader = {
+  name: 'universal-client-loader',
   setup({ onLoad }) {
     onLoad({ filter: /\.universal.jsx$/ }, async (args) => {
-      const newFile = snippet({
-        clientPath: clientMap[args.path],
-        serverPath: serverMap[args.path]
+      const newFile = clientSnippet({
+        clientPath: args.path,
       })
 
       return {
@@ -13,27 +12,47 @@ export const universalLoader = ({ clientMap, serverMap }) => ({
       }
     })
   },
-})
+}
 
-function snippet({ clientPath, serverPath }) {
-  const where = clientPath.split('/').findIndex(x=> x==='build') + 1
-  const relativeClientPath = clientPath.split('/').slice(where).join('/')
-  const javascript = `|import A from './${relativeClientPath}'; 
-                      |const { hydrateRoot } = ReactDOM; 
-                      |const node = document.getElementById('${serverPath}'); 
-                      |const props = JSON.parse(node.dataset.harmenComponent); 
-                      |const newElement = React.createElement(A, props);
-                      |hydrateRoot(node, newElement);`.split(/^[ \t]*\|/m).join('').replace(/\n/g, '');
+export const universalServerLoader = {
+  name: 'universal-server-loader',
+  setup({ onLoad }) {
+    onLoad({ filter: /\.universal.jsx$/ }, async (args) => {
+      const newFile = serverSnippet({
+        serverPath: args.path,
+      })
 
-  return `|import Component from '${serverPath}'
-          |export default function C(props) {
-          |return <>
-          |<script 
-          |  type='module' 
-          |  dangerouslySetInnerHTML={{__html: "${javascript}"}}
-          |/>
-          |<div data-harmen-component={JSON.stringify(props)} id='${serverPath}'>
+      return {
+        contents: newFile,
+        loader: 'jsx',
+      }
+    })
+  },
+}
+
+function clientSnippet({ clientPath }) {
+  const path = clientPath.replace('.jsx','.js')
+
+  return `|import React from 'react';
+          |import ReactDOM from 'react-dom/client';
+          |import ClientComponent from '${path}'; 
+          |const { hydrateRoot } = ReactDOM; 
+          |const nodes = Array.from(document.querySelectorAll('*[data-harmen-component-id="${Bun.hash(path)}"]'));
+          |nodes.map(x => {
+          |const props = JSON.parse(x.dataset.harmenComponent); 
+          |const newElement = React.createElement(ClientComponent, props);
+          |hydrateRoot(x, newElement);
+          |})`.split(/^[ \t]*\|/m).join('').replace(/\n/g, '');
+}
+
+function serverSnippet({  serverPath }) {
+  const path = serverPath.replace('.jsx','.js')
+
+  return `|import Component from '${path}'
+          |export default function ServerComponent(props) {
+          |return (
+          |<div data-harmen-component={JSON.stringify(props)} data-harmen-component-id='${Bun.hash(path)}'>
           |  <Component {...props}/>
-          |</div></>
+          |</div>)
           |}`.split(/^[ \t]*\|/m).join('')
 }

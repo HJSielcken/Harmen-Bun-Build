@@ -1,7 +1,7 @@
 import styles from './Container.css'
 export function Container({ aap }) {
   return (
-    <div className={styles.component}>
+    <div className={cx(styles.component, styles[aap])}>
       noot
       <button
         onClick={() => {
@@ -12,4 +12,9 @@ export function Container({ aap }) {
       </button>
     </div>
   )
+}
+
+
+function cx(...x) {
+  return x.filter(Boolean).join(' ')
 }

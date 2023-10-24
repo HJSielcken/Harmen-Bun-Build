@@ -1,11 +1,14 @@
 import Container from './Container.universal'
+import Container2 from './Container2.universal'
 import styles from './App.css'
+import { readdirSync } from 'fs'
 
 export default function App() {
   return (
     <Html>
       <div className={styles.component}>Aap</div>
-      <Container aap='kees'/>
+      <Container aap='kees' />
+      <Container2 aap='wim' />
     </Html>
   )
 }
@@ -16,13 +19,35 @@ function Html({ children }) {
       <head>
         <title>aap</title>
         <link rel='stylesheet' href='./allCss.css' />
-        <script type="text/javascript" src="/react.development.js"></script>
-        <script type="text/javascript" src="/react-dom.development.js"></script>
-        {/* <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/16.8.6/umd/react.development.js"></script> */}
-        {/* <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom.development.js"></script> */}
-        {/* <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom.development.js"></script> */}
+        <JavaScript />
       </head>
       {children}
     </html>
+  )
+}
+
+function JavaScript() {
+  const chunkFiles = readdirSync(`${process.cwd()}/build`)
+    .filter((x) => /^chunk\-.*\.js$/.test(x))
+    .map((x) => [x, `./${x}`])
+
+  const moduleFiles = readdirSync(`${process.cwd()}/build`).filter((x) =>
+    /.*universal\.browser\.js$/.test(x)
+  )
+
+  const importMap = { imports: Object.fromEntries(chunkFiles) }
+  return (
+    <>
+      <script
+        type='importmap'
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(importMap) }}
+      />
+      {chunkFiles.map((x, idx) => (
+        <script key={idx} defer type='module' src={x[1]}></script>
+      ))}
+      {moduleFiles.map((x, idx) => (
+        <script key={idx} defer type='module' src={x}></script>
+      ))}
+    </>
   )
 }
