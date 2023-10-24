@@ -32,7 +32,7 @@ function JavaScript() {
     .map((x) => [x, `./${x}`])
 
   const moduleFiles = readdirSync(`${process.cwd()}/build`).filter((x) =>
-    /.*universal\.browser\.js$/.test(x)
+    /.*universal\.js$/.test(x)
   )
 
   const importMap = { imports: Object.fromEntries(chunkFiles) }

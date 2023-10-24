@@ -2768,7 +2768,7 @@ var Html = function({ children }) {
 };
 var JavaScript = function() {
   const chunkFiles = readdirSync(`${process.cwd()}/build`).filter((x) => /^chunk\-.*\.js$/.test(x)).map((x) => [x, `./${x}`]);
-  const moduleFiles = readdirSync(`${process.cwd()}/build`).filter((x) => /.*universal\.browser\.js$/.test(x));
+  const moduleFiles = readdirSync(`${process.cwd()}/build`).filter((x) => /.*universal\.js$/.test(x));
   const importMap = { imports: Object.fromEntries(chunkFiles) };
   return jsx_dev_runtime6.jsxDEV(jsx_dev_runtime6.Fragment, {
     children: [

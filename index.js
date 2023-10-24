@@ -17,7 +17,7 @@ async function build() {
       outdir: './build',
       target: 'browser',
       naming: {
-        entry: '[dir]/[name].browser.[ext]'
+        entry: '[dir]/[name].[ext]'
       },
       splitting: true,
       plugins: [universalClientLoader, cssLoader, kaliberConfigLoader],
