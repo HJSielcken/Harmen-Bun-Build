@@ -3,10 +3,12 @@ import { kaliberConfigLoader } from './kaliberConfigLoader'
 import { universalClientLoader, universalServerLoader } from './universalLoader'
 import { readdirSync, copyFileSync, unlinkSync } from 'fs'
 
-
 async function build() {
+  const buildFiles = readdirSync('build')
+  buildFiles.map(x => unlinkSync(`${process.cwd()}/build/${x}`))
   const srcFiles = readdirSync('src')
-  const universalEntrypoints = srcFiles.filter(x => /universal\.jsx/.test(x)).map(x => `${import.meta.dir}/src/${x}`)
+
+  const universalEntrypoints = srcFiles.filter(x => /universal\.jsx/.test(x)).map(x => `${process.cwd()}/src/${x}`)
   universalEntrypoints.map(x => copyFileSync(x, x.replace('.jsx', '.js')))
 
   try {
@@ -31,8 +33,7 @@ async function build() {
 
     universalEntrypoints.map(x => unlinkSync(x.replace('.jsx', '.js')))
 
-
-    await Bun.write('./build/allCss.css', allCss)
+    await Bun.write(`${process.cwd()}/build/allCss.css`, allCss)
 
     console.log(result.logs.join('\n'))
     console.log(`Success: ${result.success}`)
