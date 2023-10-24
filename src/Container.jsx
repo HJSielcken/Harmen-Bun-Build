@@ -1,5 +1,5 @@
 import styles from './Container.css'
-export default function Container({ aap }) {
+export function Container({ aap }) {
   return (
     <div className={styles.component}>
       noot

@@ -1,3 +1,4 @@
+// @bun
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getProtoOf = Object.getPrototypeOf;
@@ -2670,9 +2671,10 @@ var require_jsx_dev_runtime = __commonJS((exports, module) => {
     module.exports = react_jsx_dev_runtime_development;
   }
 });
-
 // src/Container.css
-var Container_default = "./Container-dc827dd4b9c67fdb.css";
+var Container_default = {
+  component: "_component_rkg08_1"
+};
 
 // src/Container.jsx
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
@@ -2693,6 +2695,14 @@ function Container2({ aap }) {
     ]
   }, undefined, true, undefined, this);
 }
+
+// src/Container.universal.jsx
+var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
+function ContainerApp({ aap }) {
+  return jsx_dev_runtime2.jsxDEV(Container2, {
+    aap
+  }, undefined, false, undefined, this);
+}
 export {
-  Container2 as Container
+  ContainerApp as default
 };

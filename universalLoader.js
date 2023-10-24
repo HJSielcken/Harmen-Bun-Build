@@ -1,34 +1,11 @@
-
-
-export const universalLoader = {
+export const universalLoader = ({ clientMap, serverMap }) => ({
   name: 'universal-modules',
-  setup({ onLoad, config }) {
+  setup({ onLoad }) {
     onLoad({ filter: /\.universal.jsx$/ }, async (args) => {
-      const [filename, ...rest] = args.path.split('/').reverse()
-
-      const path = args.path.replace('universal.', '')
-
-      const client = Bun.build({
-        entrypoints: [path],
-        target: 'browser',
-        outdir: 'browser'
+      const newFile = snippet({
+        clientPath: clientMap[args.path],
+        serverPath: serverMap[args.path]
       })
-
-      console.log(path.replace('src', 'build/browser').replace('jsx', 'js'))
-
-      const newFile = `
-      import Component from '${path}'
-      
-      export default function C(props) {
-        return <>
-        <script type="module" 
-        dangerouslySetInnerHTML={{__html: "import A from '/browser/Container.js'; const { hydrate } = ReactDOM; let node = document.getElementById('Container.universal.jsx'); let props = JSON.parse(node.dataset.harmenComponent); let newElement = React.createElement(A, props);hydrate(newElement, node);"}}
-        />
-        <div data-harmen-component={JSON.stringify(props)} id='${filename}'>
-          <Component {...props}/>
-        </div></>
-      }
-      `
 
       return {
         contents: newFile,
@@ -36,4 +13,27 @@ export const universalLoader = {
       }
     })
   },
+})
+
+function snippet({ clientPath, serverPath }) {
+  const where = clientPath.split('/').findIndex(x=> x==='build') + 1
+  const relativeClientPath = clientPath.split('/').slice(where).join('/')
+  const javascript = `|import A from './${relativeClientPath}'; 
+                      |const { hydrateRoot } = ReactDOM; 
+                      |const node = document.getElementById('${serverPath}'); 
+                      |const props = JSON.parse(node.dataset.harmenComponent); 
+                      |const newElement = React.createElement(A, props);
+                      |hydrateRoot(node, newElement);`.split(/^[ \t]*\|/m).join('').replace(/\n/g, '');
+
+  return `|import Component from '${serverPath}'
+          |export default function C(props) {
+          |return <>
+          |<script 
+          |  type='module' 
+          |  dangerouslySetInnerHTML={{__html: "${javascript}"}}
+          |/>
+          |<div data-harmen-component={JSON.stringify(props)} id='${serverPath}'>
+          |  <Component {...props}/>
+          |</div></>
+          |}`.split(/^[ \t]*\|/m).join('')
 }

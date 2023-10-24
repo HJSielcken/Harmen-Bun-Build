@@ -1,3 +1,4 @@
-export default function Container({ aap }) {
-  return <div className={styles.component}>noot</div>
+import { Container } from './Container'
+export default function ContainerApp({ aap }) {
+  return <Container {...{ aap }} />
 }
